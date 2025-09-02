@@ -1,0 +1,19 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+@theme static {
+  --color-brand-50: #edeaf9;
+  --color-brand-100: #c7bdf0;
+  --color-brand-200: #a18ee6;
+  --color-brand-300: #7b60dc;
+  --color-brand-400: #6548cc;
+  --color-brand-500: #5a45aa; /* main */
+  --color-brand-600: #4a3b8e;
+  --color-brand-700: #3a2f70;
+  --color-brand-800: #2b2352;
+  --color-brand-900: #1b1734;
+}
+
+body {
+  font-family: "Poppins", sans-serif;
+}

@@ -1,0 +1,15 @@
+services:
+  3pl-frontend:
+    container_name: 3pl-frontend
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NUXT_PUBLIC_BACKEND_URL=${NUXT_PUBLIC_BACKEND_URL}
+        - NUXT_PUBLIC_APP_ENV=development
+    environment:
+      - NUXT_PUBLIC_BACKEND_URL=${NUXT_PUBLIC_BACKEND_URL}
+      - NUXT_PUBLIC_APP_ENV=development
+    ports:
+      - "3060:3000"
+    restart: unless-stopped

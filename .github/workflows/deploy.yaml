@@ -1,0 +1,61 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [dev]
+  workflow_dispatch:
+
+env:
+  EC2_HOST: ${{ secrets.AWS_EC2_HOST_STAG }}
+  EC2_USERNAME: ${{ secrets.AWS_EC2_USERNAME }}
+  SSH_PRIVATE_KEY: ${{ secrets.AWS_EC2_ACCESS_KEY }}
+  NUXT_PUBLIC_BACKEND_URL: ${{ secrets.NUXT_PUBLIC_BACKEND_URL }}
+  NUXT_PUBLIC_APP_ENV: development
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            --build-arg NUXT_PUBLIC_BACKEND_URL=${{ env.NUXT_PUBLIC_BACKEND_URL }} \
+            --build-arg NUXT_PUBLIC_APP_ENV=${{ env.NUXT_PUBLIC_APP_ENV }} \
+            -t 3pl-frontend:latest .
+          docker save 3pl-frontend:latest > image.tar
+
+      - name: Copy image to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ env.EC2_HOST }}
+          username: ${{ env.EC2_USERNAME }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          source: image.tar
+          target: /tmp
+          strip_components: 0
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ env.EC2_HOST }}
+          username: ${{ env.EC2_USERNAME }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
+          script: |
+            # Load the Docker image
+            docker load < /tmp/image.tar
+            # Stop and remove existing container
+            docker stop 3pl-frontend || true
+            docker rm 3pl-frontend || true
+            # Run new container
+            docker run -d \
+              --name 3pl-frontend \
+              --restart unless-stopped \
+              -p 3060:3000 \
+              3pl-frontend:latest
+            # Clean up the tar file
+            rm /tmp/image.tar
